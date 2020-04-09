@@ -1,45 +1,49 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { whichPage } from '../../store/action/action';
 import api from '../../services/api';
 import "./styles.css"
 
-export default class Main extends Component {
+function Main() {
 
-    state = {
-        products: [],
-        productInfo: {},
-        page: 1,
-    }
+  const [products, setProducts] = useState([]);
+  const [productInfo, setProductInfo] = useState({});
+  const [page, setpage] = useState(1);
+  console.log("Atual", page)
+  
+  const pageRedux = useSelector(state => state.page);
+  console.log("Page Redux", pageRedux);
 
-    componentDidMount() {
-        this.loadProducts();
-    }
+  const dispatch = useDispatch();
 
-    loadProducts = async (page = 1) => {
+    useEffect(() => {
+      loadProducts()
+      // eslint-disable-next-line
+    },[])
+
+    const loadProducts = async (page = 1) => {
         const response = await api.get(`/products?page=${page}`);
         const { docs, ...productInfo } = response.data;
+ 
+        setProductInfo(productInfo);
+        setpage(page)
+        setProducts(docs, productInfo, page);
 
-        this.setState({ products: docs, productInfo, page});
+        dispatch(whichPage(page))
     };
 
-    prevPage = ()  => {
-        const { page } = this.state;
+    const prevPage = ()  => {
         if (page === 1) return;    
         const pageNumber = page - 1;
-
-        this.loadProducts(pageNumber);
+        loadProducts(pageNumber);
     }
 
-    nextPage = ()  => {
-        const { page, productInfo } = this.state;
+    const nextPage = ()  => {
         if (page === productInfo.pages) return;
-        const pageNumber = page + 1;
-    
-        this.loadProducts(pageNumber);
+        const pageNumber = page + 1;   
+        loadProducts(pageNumber);
     }
     
-
-    render() {
-        const { products, page, productInfo } = this.state;
 
         return (
             <div className="product-list">
@@ -54,10 +58,14 @@ export default class Main extends Component {
                 </article>
               ))}
               <div className="actions">
-                <button disabled={page === 1} onClick={this.prevPage}>Anterior</button>
-                <button disabled={page === productInfo.pages} onClick={this.nextPage}>Próximo</button>
+                <button disabled={page === 1} onClick={prevPage}>Anterior</button>
+                <button disabled={page === productInfo.pages} onClick={nextPage}>Próximo</button>
               </div>
             </div>
         );
     }
-}
+
+   
+export default Main
+    
+    
